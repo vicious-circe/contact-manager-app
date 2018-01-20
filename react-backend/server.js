@@ -5,6 +5,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
+const cors = require('cors');
 
 const mongoose = require('./db/mongoose');
 const {User} = require('./models/user');
@@ -13,11 +14,12 @@ const app = express();
 const port = process.env.PORT;
 const home_route = require('./routes/home');
 
+app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/users', home_route);
 app.use(bodyParser.json());
 app.use(session({
-    secret:'this-is-a-secret-token', 
+    secret:'this-is-a-secret-token',
     cookie: {maxAge: 60000},
     resave: true,
     saveUninitialized: false
@@ -29,7 +31,7 @@ app.get('/', (req, res) => {
 
 app.post('/signup', (req, res) => {
     var user = new User({
-        email: req.body.email, 
+        email: req.body.email,
         password: req.body.password
     });
 
