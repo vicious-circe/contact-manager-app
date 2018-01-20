@@ -16,7 +16,12 @@ const home_route = require('./routes/home');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/users', home_route);
 app.use(bodyParser.json());
-app.use(session({ secret: 'this-is-a-secret-token', cookie: { maxAge: 60000 }}));
+app.use(session({
+    secret:'this-is-a-secret-token', 
+    cookie: {maxAge: 60000},
+    resave: true,
+    saveUninitialized: false
+}));
 
 app.get('/', (req, res) => {
     res.send('contact manager app');
