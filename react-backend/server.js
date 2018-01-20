@@ -19,7 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/users', home_route);
 app.use(bodyParser.json());
 app.use(session({
-    secret:'this-is-a-secret-token',
+    secret:'secret',
     cookie: {maxAge: 60000},
     resave: true,
     saveUninitialized: false
@@ -41,8 +41,10 @@ app.post('/signup', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-    if(req.session.user) return res.redirect('/users/home');
-
+    if(req.session.user) {
+        console.log('redirecting', req.session.user);
+        return res.redirect('/users/home');
+    }
     var email = req.body.email;
     var password = req.body.password;
 
@@ -50,14 +52,30 @@ app.post('/login', (req, res) => {
         if(!user) {
             res.send('user does not exist');
         } else {
-            bcrypt.compare(password, user.password, (err, res) => {
-                if(res) {
+            bcrypt.compare(password, user.password, (err, result) => {
+                if(result) {
                     req.session.user = {id:user._id}
-                    console.log('user logged in');
+                    console.log('user logged in', req.session.user);
+                    res.redirect('/users/home');
+                } else {
+                    res.send('incorrect password', req.session.user);
                 }
             });
         }
     });
+});
+
+app.get('/logout', (req, res) => {
+    if(req.session.user) {
+        req.session.destroy((err) => {
+            if(err) {
+                console.log('error logging out');
+            } else {
+                console.log('logged out');
+                res.redirect('/');
+            }
+        });
+    } 
 });
 
 app.post('/addContact', (req, res) => {
