@@ -1,7 +1,9 @@
 .App {
   text-align: center;
-}
+  display:flex;
+  flex-flow: column;
 
+}
 .App-logo {
   animation: App-logo-spin infinite 20s linear;
   height: 80px;
@@ -20,6 +22,20 @@
 
 .App-intro {
   font-size: large;
+}
+
+.content-body{
+  float: none;
+  margin:2%;
+  padding:10%;
+
+  background-color:#e0e2e5;
+
+}
+
+#login-sign_btn{
+  margin:0 5px 0 5px;
+  width:70px;
 }
 
 @keyframes App-logo-spin {
