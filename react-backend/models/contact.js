@@ -5,7 +5,7 @@ const ContactSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       required: true
     },
-    contact_name: {
+    name: {
       type: String,
       required: [true, 'Specify the contact name'],
       minlength: 1,
