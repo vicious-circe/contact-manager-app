@@ -10,14 +10,13 @@ const validator = require('validator');
 
 const mongoose = require('./db/mongoose');
 const {User} = require('./models/user');
+const {Contact} = require('./models/contact');
 
 const app = express();
 const port = process.env.PORT;
-const home_route = require('./routes/home');
 
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/users', home_route);
 app.use(bodyParser.json());
 app.use(session({
     secret:'secret',
@@ -28,6 +27,24 @@ app.use(session({
 
 app.get('/', (req, res) => {
     res.send('contact manager app');
+});
+
+var isLoggedIn = (req, res, next) => {
+
+    if(req.session.user)
+        next();
+
+    //unauthorized
+    res.status(401).send('Please log in.');
+};
+
+app.get('/home', (req, res) => {
+
+    if(req.session.user) {
+        res.send('home page for user');
+    } else {
+        res.status(401).send('Please log in');
+    }
 });
 
 app.post('/signup', (req, res) => {
@@ -63,11 +80,15 @@ app.post('/signup', (req, res) => {
 app.post('/login', (req, res) => {
     if(req.session.user) {
         console.log('redirecting', req.session.user);
-        return res.redirect('/users/home');
+        return res.redirect('/home');
     }
 
-    if(!validator.isEmail(req.body.email)) {
-        console.log('eamil is not valid');
+    if(!req.body.email || !validator.isEmail(req.body.email)) {
+        res.send('Email is not valid');
+    }
+
+    if(!req.body.password) {
+        res.send('Password is required');
     }
 
     var email = req.body.email;
@@ -75,15 +96,15 @@ app.post('/login', (req, res) => {
 
     User.findOne({email}).then((user) => {
         if(!user) {
-            res.send(`There is no user associated to the email ${email}`);
+            res.send(`There is no user associated to this email: ${email}`);
         } else {
             bcrypt.compare(password, user.password, (err, result) => {
                 if(result) {
                     req.session.user = {id:user._id}
                     console.log('user logged in', req.session.user);
-                    res.redirect('/users/home');
+                    res.redirect('/home');
                 } else {
-                    res.send('incorrect password', req.session.user);
+                    res.send('Incorrect password');
                 }
             });
         }
@@ -100,17 +121,34 @@ app.get('/logout', (req, res) => {
                 res.redirect('/');
             }
         });
-    } 
+    } else {
+        res.redirect('/');
+    }
 });
 
-app.post('/addContact', (req, res) => {
+app.post('/addContact', isLoggedIn, (req, res) => {
 
 });
 
-app.post('/searchContacts', (req, res) => {
+app.post('/searchContacts', isLoggedIn, (req, res) => {
 
+});
+
+app.delete('/delete/:contactid', isLoggedIn, (req, res) => {
+    var contactid = req.params.contactid;
+   
+    Contact.findOneAndRemove({_id: contactid, _userId: req.session.user.id}).then((contact) => {
+        if (!contact) {
+            return res.status(404).send();
+        }
+
+        res.send(contact);
+    }).catch((e) => {
+        res.status(400).send();
+    });
 });
 
 app.listen(port, () => {
     console.log(`server running on port ${port}`);
 });
+
