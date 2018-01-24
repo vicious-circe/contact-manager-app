@@ -7,26 +7,25 @@ const ContactSchema = new mongoose.Schema({
     },
     contact_name: {
       type: String,
-      required: true,
+      required: [true, 'Specify the contact name'],
       minlength: 1,
       trim: true
     },
 
     phone_number: {
       type: Number,
-      required: false,
+      required: [false, 'Specify phone number'],
       minlength: 10,
       trim: true
     },
 
     email: {
         type: String,
-        required: false,
+        required: [false, 'Specify email'],
         trim: true,
         minlength: 1,
         unique: true
     }  
-
 });
 
 var Contact = mongoose.model('Contact', ContactSchema);
