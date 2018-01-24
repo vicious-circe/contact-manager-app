@@ -33,6 +33,10 @@
   width:70px;
 }
 
+.well{
+  background-color: #a8a8a8;
+}
+
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
