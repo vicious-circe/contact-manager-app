@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(session({
     secret:'secret',
-    cookie: {maxAge: 60000},
+    cookie: {maxAge: 360000},
     resave: true,
     saveUninitialized: false
 }));
@@ -32,13 +32,13 @@ app.get('/', (req, res) => {
 var isLoggedIn = (req, res, next) => {
 
     if(req.session.user)
-        next();
+        return next();
 
     //unauthorized
     res.status(401).send('Please log in.');
 };
 
-app.get('/home', (req, res) => {
+app.get('/home', isLoggedIn, (req, res) => {
 
     if(req.session.user) {
         res.send('home page for user');
@@ -127,12 +127,34 @@ app.get('/logout', (req, res) => {
 });
 
 app.post('/addContact', isLoggedIn, (req, res) => {
+    
+    //if Mongo database is not started
+    if(mongoose.connection.readyState !== 1) {
+        res.send(`We're sorry. We are having trouble connecting. Try again later`);
+        return;
+    }
+    
+    var contact = new Contact({
+        _userId: req.session.user.id,
+        name: req.body.name,
+        phone_number: req.body.phone_number,
+        email: req.body.email
+    });
+
+    console.log('adding contact from:', req.session.user);
+
+    contact.save().then((c) => {
+        console.log('adding');
+        res.send(`${contact.name} was added succesfully.`);
+    }).catch((e) => {
+        res.send(e);
+    });
 
 });
 
-app.post('/searchContacts', isLoggedIn, (req, res) => {
+// app.post('/searchContacts', isLoggedIn, (req, res) => {
 
-});
+// });
 
 app.delete('/delete/:contactid', isLoggedIn, (req, res) => {
     var contactid = req.params.contactid;
