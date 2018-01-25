@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(session({
     secret:'secret',
-    cookie: {maxAge: 400000},
+    cookie: {maxAge: 360000},
     resave: true,
     saveUninitialized: false
 }));
@@ -31,9 +31,8 @@ app.get('/', (req, res) => {
 
 var isLoggedIn = (req, res, next) => {
 
-    console.log('isloggedin?', req.session.user);
     if(req.session.user)
-        next();
+        return next();
 
     //unauthorized
     res.status(401).send('Please log in.');
@@ -142,7 +141,10 @@ app.post('/addContact', isLoggedIn, (req, res) => {
         email: req.body.email
     });
 
+    console.log('adding contact from:', req.session.user);
+
     contact.save().then((c) => {
+        console.log('adding');
         res.send(`${contact.name} was added succesfully.`);
     }).catch((e) => {
         res.send(e);
@@ -150,9 +152,9 @@ app.post('/addContact', isLoggedIn, (req, res) => {
 
 });
 
-app.post('/searchContacts', isLoggedIn, (req, res) => {
+// app.post('/searchContacts', isLoggedIn, (req, res) => {
 
-});
+// });
 
 app.delete('/delete/:contactid', isLoggedIn, (req, res) => {
     var contactid = req.params.contactid;
