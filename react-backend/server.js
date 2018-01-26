@@ -52,7 +52,7 @@ app.post('/signup', (req, res) => {
     }
 
     console.log('signing up');
-    
+
     //if Mongo database is not started
     if(mongoose.connection.readyState !== 1) {
         res.status(500).send(`We're sorry. We are having trouble connecting. Try again later`);
@@ -184,9 +184,23 @@ app.post('/addContact', isLoggedIn, (req, res) => {
     });
 });
 
-// app.post('/searchContacts', isLoggedIn, (req, res) => {
+app.get('/searchContacts', isLoggedIn, (req, res) => {
 
-// });
+    //if Mongo database is not started
+    if(mongoose.connection.readyState !== 1) {
+        res.status(500).send(`We're sorry. We are having trouble connecting. Try again later`);
+        return;
+    }
+
+    Contact.find({
+        _userId: req.session.user.id
+    }).then((contacts) => {
+        res.status(200).send(contacts);
+    }, (e) => {
+        res.status(400).send(e);
+    });
+
+});
 
 app.delete('/delete/:contactid', isLoggedIn, (req, res) => {
     var contactid = req.params.contactid;
