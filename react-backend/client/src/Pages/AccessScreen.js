@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import './App.css';
+import '../App.css';
 import axios from 'axios';
 import {
   Form,
@@ -7,7 +7,6 @@ import {
   FormControl,
   ControlLabel,
   Col,
-  Row,
   Button,
   Checkbox,
   Jumbotron,
@@ -18,15 +17,20 @@ import {
 var emailVal = false, passVal = false;
 
 class AccessScreen extends Component {
-  state = {
+constructor(props){
+  super(props);
+  this.state = {
     email:'',
     password:'',
     password2:'',
     fname:'',
     lname:'',
     phone:'',
-    signup:false
+    signup:false,
+    response:'',
+    userName:'John'
   };
+}
 
 
   /** This will come handy when retriving the contact list
@@ -59,7 +63,7 @@ class AccessScreen extends Component {
     else{
       emailVal = false;
     }
-    console.log("emailVal "+emailVal+" passVal "+passVal);
+    //console.log("emailVal "+emailVal+" passVal "+passVal);
     return ans;
   }
 //Needs work to handle
@@ -82,7 +86,7 @@ class AccessScreen extends Component {
       passVal = false;
     }
 
-    console.log("emailVal "+emailVal+" passVal "+passVal);
+    //console.log("emailVal "+emailVal+" passVal "+passVal);
     return ans;
   }
   comparePassword(){
@@ -101,21 +105,18 @@ class AccessScreen extends Component {
     }
     return ans;
   }
-  onSignUp(){
-    this.setState({signup: !this.state.signup});
 
-  }
+  onSubmit = async (e) => {
+    e.preventDefault();
+    if(emailVal || passVal){
 
-  onSubmit = (e) => {
-    if(!emailVal || !passVal){
-      e.preventDefault();
       console.log(this.state.password);
-    }
-    else{
+
+
       var data = {};
       var url ='';
 
-      if(this.state.signup){
+      if(this.state.signup===false){
         url = '/login';
         data={
         "email":this.state.email,
@@ -133,7 +134,6 @@ class AccessScreen extends Component {
       "lname":this.state.lname,
       "phone":this.state.phone
       }
-
       this.setState({email:'',
         password:'',
         password2:'',
@@ -143,18 +143,16 @@ class AccessScreen extends Component {
         signup:false});
     }
 
-        var post = JSON.stringify(data);
-      axios.post('http://localhost:3000'+url, post)
-        .then(function (result){
-          console.log(result);
-          if(result.data.code === 200){
-            console.log("HI");
-          }
+        //var post = JSON.stringify(data);
+        var sendUrl = "http://localhost:3001"+url;
 
-        })
-        .catch(function (error) {
-       console.log(error);
-     });
+        //this.props.setUser(this.state.userName);
+        this.props.userHasAuthenticated(true);
+
+      axios.post(sendUrl, data)
+        .then(result => this.setState({response:result.data}))
+        .catch(error => this.setState({response:error.data})
+      );
     }
   }
 
@@ -162,15 +160,12 @@ class AccessScreen extends Component {
     const { email, password, password2, fname, lname, phone } = this.state;
     return (
       <div className="App">
-        <header className="App-header">
-        <h1>Contact Manager</h1>
-        </header>
 
         <Jumbotron className="content-body">
 
           <Col smOffset={3} sm={6} >
           <Well className="well">
-            <h3>Welcome, Please Log In or Sign Up it's free! </h3>
+            <h3>{this.state.response !== ''?this.state.response: "Please Log In or Sign Up"}</h3>
           </Well>
           </Col>
 
@@ -217,7 +212,7 @@ class AccessScreen extends Component {
           <div>
                 <FormGroup
                   controlId="formHorizontalPassword2"
-                  validationState={ this.comparePassword() }>
+                  validationState={ this.state.signup?this.comparePassword():null }>
                 <Col componentClass={ ControlLabel }
                 sm={2} smOffset={2}>Password:</Col>
               <Col sm={4}>
@@ -265,7 +260,7 @@ class AccessScreen extends Component {
                 sm={2} smOffset={2}>Phone:</Col>
               <Col sm={2}>
                 <FormControl
-                  type="phone"
+                  type="tel"
                   name="phone"
                   value={phone}
                   placeholder="407-555-5555"
