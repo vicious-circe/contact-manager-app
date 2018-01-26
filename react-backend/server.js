@@ -39,13 +39,9 @@ var isLoggedIn = (req, res, next) => {
     res.status(401).send('Please, log in.');
 };
 
-app.get('/home', (req, res) => {
+app.get('/home', isLoggedIn, (req, res) => {
     console.log(req.session.user);
-    if(req.session.user) {
-        res.status(200).send('home page for user');
-    } else {
-        res.status(401).send('Please log in');
-    }
+    res.status(200).send('home page for user');
 });
 
 app.post('/signup', (req, res) => {
@@ -90,7 +86,7 @@ app.post('/signup', (req, res) => {
     });
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', isLoggedIn, (req, res) => {
     if(req.session.user) {
         console.log('redirecting', req.session.user);
         return res.redirect('http://192.168.91.1:3000/');
