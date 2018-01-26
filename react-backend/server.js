@@ -41,7 +41,7 @@ var isLoggedIn = (req, res, next) => {
 
 app.get('/home', isLoggedIn, (req, res) => {
     console.log(req.session.user);
-    res.status(200).send('home page for user');
+    res.status(200).send('Home page for user');
 });
 
 app.post('/signup', (req, res) => {
