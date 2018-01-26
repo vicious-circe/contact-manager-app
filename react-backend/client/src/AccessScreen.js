@@ -115,7 +115,7 @@ class AccessScreen extends Component {
       var data = {};
       var url ='';
 
-      if(this.state.signup){
+      if(this.state.signup===false){
         url = '/login';
         data={
         "email":this.state.email,
@@ -140,21 +140,18 @@ class AccessScreen extends Component {
         fname:'',
         lname:'',
         phone:'',
-        signup:false});
+        signup:false,
+        response:''
+      });
     }
 
         var post = JSON.stringify(data);
-      axios.post('http://localhost:3000'+url, post)
-        .then(function (result){
-          console.log(result);
-          if(result.data.code === 200){
-            console.log("HI");
-          }
-
-        })
-        .catch(function (error) {
-       console.log(error);
-     });
+        var sendUrl = "http://localhost:3001"+url;
+      axios.post(sendUrl, data)
+        .then(response => this.setState({response:response.data}))
+        .catch(error => this.setState({response:error.data})
+     );
+     e.preventDefault();
     }
   }
 
@@ -170,7 +167,7 @@ class AccessScreen extends Component {
 
           <Col smOffset={3} sm={6} >
           <Well className="well">
-            <h3>Welcome, Please Log In or Sign Up it's free! </h3>
+            <h3>{this.state.response != null? this.state.response: "Please Log in or Signup"} </h3>
           </Well>
           </Col>
 
@@ -217,7 +214,7 @@ class AccessScreen extends Component {
           <div>
                 <FormGroup
                   controlId="formHorizontalPassword2"
-                  validationState={ this.comparePassword() }>
+                  validationState={ this.state.signup?this.comparePassword():null }>
                 <Col componentClass={ ControlLabel }
                 sm={2} smOffset={2}>Password:</Col>
               <Col sm={4}>

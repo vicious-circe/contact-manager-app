@@ -86,7 +86,7 @@ app.post('/signup', (req, res) => {
     });
 });
 
-app.post('/login', isLoggedIn, (req, res) => {
+app.post('/login', (req, res) => {
     if(req.session.user) {
         console.log('redirecting', req.session.user);
         return res.redirect('http://192.168.91.1:3000/');
@@ -114,7 +114,8 @@ app.post('/login', isLoggedIn, (req, res) => {
                     req.session.user = {id:user._id}
                     req.session.save();
                     console.log('user logged in and redirecting', req.session.user);
-                    res.redirect('http://192.168.91.1:3000/');
+                    res.send("good login");
+                    //res.redirect('http://192.168.91.1:3000/');
                 } else {
                     console.log('incorrect password');
                     res.status(401).send('Incorrect password');
@@ -131,11 +132,13 @@ app.get('/logout', (req, res) => {
                 console.log('error logging out');
             } else {
                 console.log('logged out');
-                res.redirect('http://192.168.91.1:3000/');
+                res.send('good logout');
+                //res.redirect('http://192.168.91.1:3000/');
             }
         });
     } else {
-        res.redirect('http://192.168.91.1:3000/');
+        res.send('No user was logged in - good logout');
+        //res.redirect('http://192.168.91.1:3000/');
     }
 });
 
