@@ -10,30 +10,27 @@ const UserSchema = new mongoose.Schema({
         unique: true,
         trim: true,
         validate: [isEmail, 'Email address is invalid']
-    }, 
+    },
     password: {
         type: String,
         required: [true, 'Password is required'],
         minlength: [6, "Password must be at least 6 characters long"],
     },
-    firstName: {
-      type: String,
-      required: true, 
-      minlength: 1
-    },
-    lastName: {
+    fname: {
       type: String,
       required: true,
       minlength: 1
     },
-    phone: {
-      type: String
+    lname: {
+      type: String,
+      required: true,
+      minlength: 1
     }
-}); 
+});
 
 UserSchema.pre('save', function(next) {
     var user = this;
-  
+
     if(user.isModified('password')) {
       bcrypt.genSalt(10, (err, salt) => {
         bcrypt.hash(user.password, salt, (err, hash) => {
