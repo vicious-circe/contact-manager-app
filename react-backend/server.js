@@ -52,6 +52,7 @@ app.post('/signup', (req, res) => {
     }
 
     console.log('signing up');
+    
     //if Mongo database is not started
     if(mongoose.connection.readyState !== 1) {
         res.status(500).send(`We're sorry. We are having trouble connecting. Try again later`);
