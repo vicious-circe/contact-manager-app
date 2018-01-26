@@ -26,22 +26,23 @@ app.use(session({
 }));
 
 app.get('/', (req, res) => {
-    res.send('contact manager app');
+    res.status(200).send('contact manager app');
 });
 
 var isLoggedIn = (req, res, next) => {
 
+    console.log(req.session.user);
     if(req.session.user)
         return next();
 
     //unauthorized
-    res.status(401).send('Please log in.');
+    res.status(401).send('Please, log in.');
 };
 
-app.get('/home', isLoggedIn, (req, res) => {
-
+app.get('/home', (req, res) => {
+    console.log(req.session.user);
     if(req.session.user) {
-        res.send('home page for user');
+        res.status(200).send('home page for user');
     } else {
         res.status(401).send('Please log in');
     }
@@ -49,46 +50,60 @@ app.get('/home', isLoggedIn, (req, res) => {
 
 app.post('/signup', (req, res) => {
 
+  if(req.session.user) {
+      console.log('redirecting', req.session.user);
+      return res.redirect('http://192.168.91.1:3000/');
+    }
+
+    console.log('signing up');
     //if Mongo database is not started
     if(mongoose.connection.readyState !== 1) {
-        res.send(`We're sorry. We are having trouble connecting. Try again later`);
+        res.status(500).send(`We're sorry. We are having trouble connecting. Try again later`);
         return;
     }
-    
+
+    console.log('body', req.body);
     let user = new User({
         email: req.body.email,
-        password: req.body.password
+        password: req.body.password,
+        fname: req.body.fname,
+        lname: req.body.lname,
+        phone: req.body.phone
     });
 
     user.save().then((u) => {
-        res.send('Welcome! Please login');
+        res.status(200).send('Welcome! Please login');
     }).catch((e) => {
         let  error = e.toJSON();
-        
+
         if(error['code'] === 11000) {
-            res.send('Email already exists');
+            res.status(400).send('Email already exists');
         } else if(error.errors.hasOwnProperty('email')) {
             let message = error.errors.email['message'];
-            res.send(message);
+            res.status(400).send(message);
         } else if(error.errors.hasOwnProperty('password')) {
             let message = error.errors.password['message'];
-            res.send(message);
+            res.status(400).send(message);
+        } else {
+            res.status(400).send(`${user} Error occurred ${e}`);
         }
-    }); 
+    });
 });
 
 app.post('/login', (req, res) => {
     if(req.session.user) {
         console.log('redirecting', req.session.user);
-        return res.redirect('/home');
+        return res.redirect('http://192.168.91.1:3000/');
     }
 
+    console.log('body login', req.body);
+
     if(!req.body.email || !validator.isEmail(req.body.email)) {
-        res.send('Email is not valid');
+        res.status(400).send('Email is not valid');
     }
 
     if(!req.body.password) {
-        res.send('Password is required');
+        res.status(400).send('Password is required');
     }
 
     var email = req.body.email;
@@ -96,15 +111,17 @@ app.post('/login', (req, res) => {
 
     User.findOne({email}).then((user) => {
         if(!user) {
-            res.send(`There is no user associated to this email: ${email}`);
+            res.status(401).send(`There is no user associated to this email: ${email}`);
         } else {
             bcrypt.compare(password, user.password, (err, result) => {
                 if(result) {
                     req.session.user = {id:user._id}
-                    console.log('user logged in', req.session.user);
-                    res.redirect('/home');
+                    req.session.save();
+                    console.log('user logged in and redirecting', req.session.user);
+                    res.redirect('http://192.168.91.1:3000/');
                 } else {
-                    res.send('Incorrect password');
+                    console.log('incorrect password');
+                    res.status(401).send('Incorrect password');
                 }
             });
         }
@@ -118,25 +135,26 @@ app.get('/logout', (req, res) => {
                 console.log('error logging out');
             } else {
                 console.log('logged out');
-                res.redirect('/');
+                res.redirect('http://192.168.91.1:3000/');
             }
         });
     } else {
-        res.redirect('/');
+        res.redirect('http://192.168.91.1:3000/');
     }
 });
 
 app.post('/addContact', isLoggedIn, (req, res) => {
-    
+
     //if Mongo database is not started
     if(mongoose.connection.readyState !== 1) {
-        res.send(`We're sorry. We are having trouble connecting. Try again later`);
+        res.status(500).send(`We're sorry. We are having trouble connecting. Try again later`);
         return;
     }
-    
+
     var contact = new Contact({
         _userId: req.session.user.id,
-        name: req.body.name,
+        fname: req.body.fname,
+        lname: req.body.lname,
         phone_number: req.body.phone_number,
         email: req.body.email
     });
@@ -144,12 +162,26 @@ app.post('/addContact', isLoggedIn, (req, res) => {
     console.log('adding contact from:', req.session.user);
 
     contact.save().then((c) => {
+        let name = contact.fname + ' '+ contact.lname;
+        name = name.trim();
         console.log('adding');
-        res.send(`${contact.name} was added succesfully.`);
+        res.send(`${name} was added succesfully.`);
     }).catch((e) => {
-        res.send(e);
-    });
+        let  error = e.toJSON();
 
+        console.log(error);
+        if(error['code'] === 11000) {
+            res.status(400).send('Duplicate email. This contact may be already in your contact list');
+        } else if(error.errors.hasOwnProperty('fname')) {
+            let message = error.errors.fname['message'];
+            res.status(400).send(message);
+        } else if(error.errors.hasOwnProperty('phone_number')) {
+            let message = error.errors.phone_number['message'];
+            res.status(400).send(message);
+        } else {
+            res.status(400).send(`Unable to save contact`);
+        }
+    });
 });
 
 // app.post('/searchContacts', isLoggedIn, (req, res) => {
@@ -158,13 +190,15 @@ app.post('/addContact', isLoggedIn, (req, res) => {
 
 app.delete('/delete/:contactid', isLoggedIn, (req, res) => {
     var contactid = req.params.contactid;
-   
+
     Contact.findOneAndRemove({_id: contactid, _userId: req.session.user.id}).then((contact) => {
         if (!contact) {
             return res.status(404).send();
         }
 
-        res.send(contact);
+        let name = contact.fname + ' ' + contact.lname;
+        console.log(contact);
+        res.send(`${name} was deleted`);
     }).catch((e) => {
         res.status(400).send();
     });
@@ -173,4 +207,3 @@ app.delete('/delete/:contactid', isLoggedIn, (req, res) => {
 app.listen(port, () => {
     console.log(`server running on port ${port}`);
 });
-

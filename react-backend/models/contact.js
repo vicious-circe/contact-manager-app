@@ -5,27 +5,30 @@ const ContactSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       required: true
     },
-    name: {
+    fname: {
       type: String,
-      required: [true, 'Specify the contact name'],
-      minlength: 1,
+      required: [true, 'Contact name is required'],
+      minlength: [1, 'First name cannot be empty'],
       trim: true
     },
-
+    lname: {
+      type: String,
+      required: false,
+      trim: true
+    },
     phone_number: {
       type: String,
-      required: [false, 'Specify phone number'],
-      minlength: 10,
+      required: false,
+      minlength: [10, 'Phone number must be at least 10 characters long'],
       trim: true
     },
-
     email: {
         type: String,
-        required: [false, 'Specify email'],
+        required: false,
         trim: true,
         minlength: 1,
         unique: true
-    }  
+    }
 });
 
 var Contact = mongoose.model('Contact', ContactSchema);
