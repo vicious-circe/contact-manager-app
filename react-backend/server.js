@@ -15,15 +15,20 @@ const {Contact} = require('./models/contact');
 const app = express();
 const port = process.env.PORT;
 
-app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.json());
+app.set('secure proxy', 1);
 app.use(session({
     secret:'secret',
-    cookie: {maxAge: 360000},
-    resave: true,
-    saveUninitialized: false
+    cookie: {maxAge: 360000, secure: false, httpOnly: false},
+    resave: false,
+    saveUninitialized: true
 }));
+app.use(cors({
+    origin:['http://localhost:3000'],
+    methods:['GET','POST'],
+    credentials: true // enable set cookie
+}));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
     res.status(200).send('contact manager app');
@@ -48,7 +53,7 @@ app.post('/signup', (req, res) => {
 
   if(req.session.user) {
       console.log('redirecting', req.session.user);
-      return res.redirect('http://192.168.91.1:3000/');
+      return;
     }
 
     console.log('signing up');
@@ -90,16 +95,18 @@ app.post('/signup', (req, res) => {
 app.post('/login', (req, res) => {
     if(req.session.user) {
         console.log('redirecting', req.session.user);
-        return res.redirect('http://192.168.91.1:3000/');
+        return res.status(200).send();
     }
 
     console.log('body login', req.body);
 
     if(!req.body.email || !validator.isEmail(req.body.email)) {
+        console.log('one');
         res.status(400).send('Email is not valid');
     }
 
     if(!req.body.password) {
+        console.log('two');
         res.status(400).send('Password is required');
     }
 
@@ -108,15 +115,23 @@ app.post('/login', (req, res) => {
 
     User.findOne({email}).then((user) => {
         if(!user) {
+            console.log('three');
             res.status(401).send(`There is no user associated to this email: ${email}`);
         } else {
+            console.log('comparing password');
             bcrypt.compare(password, user.password, (err, result) => {
                 if(result) {
                     req.session.user = {id:user._id}
-                    req.session.save();
-                    console.log('user logged in and redirecting', req.session.user);
-                    res.send("good login");
-                    //res.redirect('http://192.168.91.1:3000/');
+                    req.session.save((err) => {
+                        if(err) {
+                            console.log('error', err);
+                        } else {
+                            console.log('hee');
+                            return res.send('good login 2');
+                        }
+                    });
+                    console.log('user logged in', req.session.user);
+                    // res.send(req.session.user);
                 } else {
                     console.log('incorrect password');
                     res.status(401).send('Incorrect password');
@@ -128,18 +143,19 @@ app.post('/login', (req, res) => {
 
 app.get('/logout', (req, res) => {
     if(req.session.user) {
+        console.log('logging out');
         req.session.destroy((err) => {
             if(err) {
                 console.log('error logging out');
+                res.status(400).send();
             } else {
-                console.log('logged out');
-                res.send('good logout');
-                //res.redirect('http://192.168.91.1:3000/');
+                console.log('logged out good');
+                res.status(200).send('logged out good');
             }
         });
     } else {
-        res.send('No user was logged in - good logout');
-        //res.redirect('http://192.168.91.1:3000/');
+        console.log('session id', req.session.user);
+        res.status(200).send('No user was logged in');
     }
 });
 

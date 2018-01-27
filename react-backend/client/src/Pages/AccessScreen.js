@@ -14,6 +14,8 @@ import {
   Well
 } from 'react-bootstrap';
 
+axios.defaults.withCredentials = true;
+
 var emailVal = false, passVal = false;
 
 class AccessScreen extends Component {
