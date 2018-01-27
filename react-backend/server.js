@@ -160,7 +160,6 @@ app.get('/logout', (req, res) => {
 });
 
 app.post('/addContact', isLoggedIn, (req, res) => {
-
     //if Mongo database is not started
     if(mongoose.connection.readyState !== 1) {
         res.status(500).send(`We're sorry. We are having trouble connecting. Try again later`);
